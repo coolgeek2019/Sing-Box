@@ -62,20 +62,16 @@ git clone https://github.com/4funNetwork/sing-box-manager
 cd sing-box-manager
 ```
 
-修改配置 config.yaml
+修改配置 config.json
 ```
-cp config.yaml.example config.yaml
-nano config.yaml  # 修改数据库路径、监听地址、订阅前缀等
-```
-配置示例：
-```
-yaml
-listen: 0.0.0.0:5678
-data_path: ./data/
-singbox_config_path: /etc/sing-box/config.json
-template_path: ./templates/
-domain: your.domain.com
-sub_url_prefix: /sub/
+{
+  "listen": "0.0.0.0:5678",
+  "data_path": "./data/",
+  "singbox_config_path": "/etc/sing-box/config.json",
+  "template_path": "./templates/",
+  "domain": "your.domain.com",
+  "sub_url_prefix": "/sub/"
+}
 ```
 3. 启动管理面板
 ```

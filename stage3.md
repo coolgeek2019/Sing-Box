@@ -55,21 +55,29 @@
 设置 Systemd 管理
 
 ```
-yaml
-# ansible/roles/sing-box/tasks/main.yml 示例
-- name: Install sing-box
-  shell: curl -fsSL https://sing-box.app/install.sh | bash
-
-- name: Copy config.json
-  copy:
-    src: files/{{ inventory_hostname }}/config.json
-    dest: /etc/sing-box/config.json
-
-- name: Enable and start sing-box
-  systemd:
-    name: sing-box
-    enabled: yes
-    state: restarted
+{
+  "tasks": [
+    {
+      "name": "Install sing-box",
+      "shell": "curl -fsSL https://sing-box.app/install.sh | bash"
+    },
+    {
+      "name": "Copy config.json",
+      "copy": {
+        "src": "files/{{ inventory_hostname }}/config.json",
+        "dest": "/etc/sing-box/config.json"
+      }
+    },
+    {
+      "name": "Enable and start sing-box",
+      "systemd": {
+        "name": "sing-box",
+        "enabled": "yes",
+        "state": "restarted"
+      }
+    }
+  ]
+}
 ```
 建议每台节点配置不同端口或域名，增加抗封能力。
 
@@ -78,38 +86,47 @@ yaml
 
 使用 sing-box-manager 生成多节点配置
 
-或写一个简易聚合器，将多节点 YAML 合并成一个订阅
+或写一个简易聚合器，将多节点 JSON 合并成一个订阅
 
 示例：
 
 ```
-bash
-# 脚本拼接多个 Clash 节点为一个订阅
-cat node1.yaml node2.yaml node3.yaml > all-nodes.yaml
+{
+  "nodes": [
+    "node1.json",
+    "node2.json",
+    "node3.json"
+  ]
+}
 ```
 也可以用 Go / Python 写一个小型聚合订阅 API。
 
 3. 客户端自动故障切换配置（Failover）
 示例（Clash Meta 多节点 failover）：
 ```
-yaml
-proxies:
-  - name: node-a
-    type: hysteria2
-    server: node-a.com
-    ...
-  - name: node-b
-    type: hysteria2
-    server: node-b.com
-    ...
-proxy-groups:
-  - name: auto
-    type: url-test
-    proxies:
-      - node-a
-      - node-b
-    url: http://www.gstatic.com/generate_204
-    interval: 300
+{
+  "proxies": [
+    {
+      "name": "node-a",
+      "type": "hysteria2",
+      "server": "node-a.com"
+    },
+    {
+      "name": "node-b",
+      "type": "hysteria2",
+      "server": "node-b.com"
+    }
+  ],
+  "proxy-groups": [
+    {
+      "name": "auto",
+      "type": "url-test",
+      "proxies": ["node-a", "node-b"],
+      "url": "http://www.gstatic.com/generate_204",
+      "interval": 300
+    }
+  ]
+}
 ```
 示例（sing-box 客户端配置 failover）：
 ```
@@ -143,20 +160,34 @@ Grafana 显示带宽、连接数、CPU、延迟等
 
 Prometheus 配置多节点示例：
 ```
-yaml
-scrape_configs:
-  - job_name: 'singbox'
-    static_configs:
-      - targets: ['node-a:9100', 'node-b:9100']
+{
+  "scrape_configs": [
+    {
+      "job_name": "singbox",
+      "static_configs": [
+        {
+          "targets": ["node-a:9100", "node-b:9100"]
+        }
+      ]
+    }
+  ]
+}
 ```
 Alertmanager 设置告警（如节点掉线）
 ```
-yaml
-receivers:
-  - name: 'telegram'
-    telegram_configs:
-      - bot_token: 'your_bot_token'
-        chat_id: 'your_chat_id'
+{
+  "receivers": [
+    {
+      "name": "telegram",
+      "telegram_configs": [
+        {
+          "bot_token": "your_bot_token",
+          "chat_id": "your_chat_id"
+        }
+      ]
+    }
+  ]
+}
 ```
 5. 节点健康探测（主动检测）
 方法一：shell 脚本 + systemd + cron
